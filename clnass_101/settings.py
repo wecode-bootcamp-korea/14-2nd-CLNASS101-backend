@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+import os
 
 from pathlib import Path
 
@@ -45,7 +46,7 @@ INSTALLED_APPS = [
     'user',
     'kit',
     'order',
-    'temporary_product',
+    'creator',
 ]
 
 MIDDLEWARE = [
@@ -150,3 +151,39 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 		#만약 허용해야할 추가적인 헤더키가 있다면?(사용자정의 키) 여기에 추가하면 됩니다.
 )
+
+AWS_ACCESS_KEY_ID       = my_settings.s3_config['access_key_id']
+AWS_SECRET_ACCESS_KEY   = my_settings.s3_config['secret_access_key']
+AWS_STORAGE_BUCKET_NAME = my_settings.s3_config['bucket_name']
+S3_BUCKET_URL           = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+
+LOGGING = {
+    'disable_existing_loggers': False,
+    'version': 1,
+    'formatters': {
+         'verbose': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class'     : 'logging.StreamHandler',
+            'formatter' : 'verbose',
+            'level'     : 'DEBUG',
+        },
+        'file': {
+            'level'     : 'DEBUG',
+            'class'     : 'logging.FileHandler',
+            'formatter' : 'verbose',
+            'filename'  : 'debug.log',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers' : ['console','file'],
+            'level'    : 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

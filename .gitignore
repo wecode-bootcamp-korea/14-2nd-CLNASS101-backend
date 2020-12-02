@@ -15,7 +15,7 @@ my_settings.py
 *.csv
 db_uploader.py
 db_truncate.py
-
+*.swp
 
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/

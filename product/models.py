@@ -4,7 +4,7 @@ class Product(models.Model):
     name            = models.CharField(max_length=100)
     effective_time  = models.DurationField(null=True)
     price           = models.DecimalField(max_digits=10, decimal_places=2)
-    sale            = models.DecimalField(max_digits=10, decimal_places=2)
+    sale            = models.DecimalField(max_digits=3, decimal_places=2)
     start_date      = models.DateField()
     thumbnail_image = models.URLField(max_length=1000)
     main_category   = models.ForeignKey('product.MainCategory', on_delete=models.SET_NULL, null=True)
@@ -110,7 +110,7 @@ class ProductDetailCategory(models.Model):
 class Chapter(models.Model):
     name            = models.CharField(max_length=100)
     product         = models.ForeignKey('product.Product', on_delete=models.CASCADE)
-    order           = models.IntegerField(max_length=20)
+    order           = models.IntegerField()
     thumbnail_image = models.URLField(max_length=1000)
 
     class Meta:
@@ -118,17 +118,17 @@ class Chapter(models.Model):
 
 class Lecture(models.Model):
     name      = models.CharField(max_length=40)
-    video_url = models.URLField(max_length=1000)
     product   = models.ForeignKey('product.Product', on_delete=models.CASCADE)
+    video     = models.OneToOneField('product.LectureVideo', on_delete=models.SET_NULL, null=True)
     chapter   = models.ForeignKey('product.Chapter', on_delete=models.SET_NULL, null=True)
-    
+    order     = models.IntegerField()
+
     class Meta:
         db_table = 'lectures'
 
 class LectureVideo(models.Model):
-    video_url = models.URLField(max_length=1000)
+    video_url = models.URLField(max_length=1000, null=True)
     duration = models.DurationField(null=True)
-    lecture = models.OneToOneField('product.Lecture', on_delete=models.SET_NULL, null=True)
     
     class Meta:
         db_table = 'lecture_videos'
@@ -161,6 +161,7 @@ class LectureContent(models.Model):
     description = models.ForeignKey('product.LectureContentDescription', on_delete=models.SET_NULL, null=True)
     image_url   = models.ForeignKey('product.LectureContentImageUrl', on_delete=models.SET_NULL, null=True)
     lecture     = models.ForeignKey('product.Lecture', on_delete=models.CASCADE)
+    product     = models.ForeignKey('product.Product', on_delete=models.CASCADE)
     order       = models.IntegerField()
 
     class Meta:
@@ -188,3 +189,4 @@ class ProductKit(models.Model):
 
     class Meta:
         db_table = 'products_kits'
+
