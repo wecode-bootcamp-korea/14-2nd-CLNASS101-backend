@@ -59,10 +59,10 @@ class RecentlyView(models.Model):
         db_table = 'recently_views'
 
 class UserProduct(models.Model):
-    user       = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
-    product    = models.ForeignKey('product.Product', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
+    user        = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
+    product     = models.ForeignKey('product.Product', on_delete=models.CASCADE)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         db_table = 'users_products'
 

@@ -7,11 +7,12 @@ from django.http import JsonResponse
 from my_settings import SECRET, ALGORITHM
 from user.models import User
 
+
 def login_decorator(view_name):
     def real_decorator(func):
         def wrapper(self, request, *args, **kwargs):
             try:
-                token   = request.headers.get('Authorization', None)
+                token = request.headers.get('Authorization', None)
 
                 if not token and view_name == 'ProductDetailView':
                     request.user = User.objects.filter(id=0)
@@ -34,6 +35,7 @@ def login_decorator(view_name):
             return func(self, request, *args, **kwargs)
         return wrapper
     return real_decorator
+
 
 def get_hashed_pw(password):
     return bcrypt.hashpw(password.encode("UTF-8"), bcrypt.gensalt()).decode("UTF-8")
