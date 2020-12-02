@@ -1,14 +1,22 @@
 import json
 import bcrypt
 import jwt
+from datetime import date, timedelta
 
-from django.test   import TestCase, Client
+from django.test import TestCase, Client
 from unittest.mock import MagicMock, patch
 
-from .models    import User
-from core.utils import (get_hashed_pw,
-                        checkpw,
-                        issue_token)
+from .models import User, ProductLike
+from kit.models import Kit
+from core.utils import (
+    get_hashed_pw,
+    checkpw,
+    issue_token)
+from product.models import (
+    Product,
+    SubCategory,
+    MainCategory,
+    Difficulty)
 
 
 class UserSignUpTest(TestCase):
@@ -202,36 +210,134 @@ class UserLogInTest(TestCase):
         self.assertEqual(checkpw(hashed_pw, self.user), False)
 
     def test_post_kakao_login_wrong_token(self):
-        header   = {'HTTP_Authorization' : 'wrong_token'}
-        response = self.client.post('/user/login/kakao', content_type='application/json', **header)
+        header = {'HTTP_Authorization': 'wrong_token'}
+        response = self.client.post(
+            '/user/login/kakao', content_type='application/json', **header)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {'MESSAGE':'INVALID_TOKEN'})
+        self.assertEqual(response.json(), {'MESSAGE': 'INVALID_TOKEN'})
 
     def test_post_kakao_login_key_error(self):
-        header   = {'HTTP_Wrong' : 'wrong_token'}
-        response = self.client.post('/user/login/kakao', content_type='application/json', **header)
+        header = {'HTTP_Wrong': 'wrong_token'}
+        response = self.client.post(
+            '/user/login/kakao', content_type='application/json', **header)
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {'MESSAGE':'KEY_ERROR'})
+        self.assertEqual(response.json(), {'MESSAGE': 'KEY_ERROR'})
 
     @patch('user.views.requests')
     def test_post_kakao_login_success(self, mocked_request):
         class FakeResponse:
             def json(self):
                 return {
-                    'id': 1548993291, 
+                    'id': 1548993291,
                     'properties': {
                         'nickname': 'test_nickname',
                         'profile_image': 'test_image_url',
-                        },
+                    },
                     'kakao_account': {
                         'email': 'test@email.com',
-                        }
                     }
-        mocked_request.get = MagicMock(return_value = FakeResponse())
-        header = {'HTTP_Authorization':'fake_token'}
-        response = self.client.post('/user/login/kakao', content_type='application/json', **header)
+                }
+        mocked_request.get = MagicMock(return_value=FakeResponse())
+        header = {'HTTP_Authorization': 'fake_token'}
+        response = self.client.post(
+            '/user/login/kakao', content_type='application/json', **header)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'token')
+
+
+class ProductSearchTest(TestCase):
+    def setUp(self):
+        self.main_categories = MainCategory.objects.create(
+            id=1,
+            name='크리에이티브'
+        )
+
+        self.sub_categories = SubCategory.objects.create(
+            id=1,
+            name='개발'
+        )
+        self.difficulty = Difficulty.objects.create(
+            name='초급자'
+        )
+        self.kit = Kit.objects.create(
+            name='test_kit',
+            main_image_url='image_url',
+            price=10000,
+            description='test_description'
+        )
+        self.creator = User.objects.create(
+            name='이소헌',
+            nick_name='신의 코드 밫소헌',
+            is_creator=True
+        )
+
+        self.user = User.objects.create(
+            name='재훈',
+            email='jae@gmail.com',
+            password='12345678',
+            is_creator=False
+        )
+        Product.objects.create(
+            name='퇴근 후 함께 즐기는 코딩 모임! 직장인을 위한  취미반, 함께해요!',
+            thumbnail_image='test_thumbnail_image_url',
+            effective_time=timedelta(days=30),
+            price=10000.00,
+            sale=0.05,
+            start_date=date.today(),
+            main_category=self.main_categories,
+            sub_category=self.sub_categories,
+            difficulty=self.difficulty,
+            creator=self.creator
+        )
+
+    def tearDown(self):
+        Product.objects.all().delete()
+        SubCategory.objects.all().delete()
+
+    def test_get_search_success(self):
+        client = Client()
+        self.maxDiff = None
+        response = client.get('/user/search?search=코딩')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+                         {
+            'id': 3,
+            'title': '퇴근 후 함께 즐기는 코딩 모임! 직장인을 위한  취미반, 함께해요!',
+            'thumbnail': 'test_thumbnail_image_url',
+            'subCategory': self.sub_categories.name,
+            'creator': '이소헌',
+            'isLiked': False,
+            'likeCount': 0,
+            'price': 10000,
+            'sale': 0.05,
+            'finalPrice': 9500
+        }
+        )
+
+    def test_get_search_fail(self):
+        client = Client()
+
+        response = client.get('/user/search?sch=클래스',
+                              content_type='application/json')
+
+        print(response)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+                         {
+            'MESSAGE': 'WRONG_KEY'
+        }
+        )
+
+    def test_get_search_no_result(self):
+        client = Client()
+        response = client.get('/user/search?search=핡')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+                         {
+            'MESSAGE': 'NO_RESULT'
+        }
+        )

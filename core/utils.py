@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from my_settings import SECRET, ALGORITHM
 from user.models import User
 
+
 def login_decorator(view_name):
     def real_decorator(func):
         def wrapper(self, request, *args, **kwargs):
@@ -36,6 +37,7 @@ def login_decorator(view_name):
         return wrapper
 
     return real_decorator
+
 
 def get_hashed_pw(password):
     return bcrypt.hashpw(password.encode("UTF-8"), bcrypt.gensalt()).decode("UTF-8")
