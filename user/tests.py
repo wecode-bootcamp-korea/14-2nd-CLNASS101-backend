@@ -1,6 +1,7 @@
 import json
 import bcrypt
 import jwt
+
 from datetime import date, timedelta
 
 from django.test import TestCase, Client
@@ -17,7 +18,6 @@ from product.models import (
     SubCategory,
     MainCategory,
     Difficulty)
-
 
 class UserSignUpTest(TestCase):
     def setUp(self):
@@ -341,3 +341,18 @@ class ProductSearchTest(TestCase):
             'MESSAGE': 'NO_RESULT'
         }
         )
+                    'id': 1548993291, 
+                    'properties': {
+                        'nickname': 'test_nickname',
+                        'profile_image': 'test_image_url',
+                        },
+                    'kakao_account': {
+                        'email': 'test@email.com',
+                        }
+                    }
+        mocked_request.get = MagicMock(return_value = FakeResponse())
+        header = {'HTTP_Authorization':'fake_token'}
+        response = self.client.post('/user/login/kakao', content_type='application/json', **header)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'token')

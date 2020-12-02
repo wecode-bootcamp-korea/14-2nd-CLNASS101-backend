@@ -1,21 +1,19 @@
 import json
 import requests
 
-from django.views     import View
-from django.http      import JsonResponse
-from django.db.models import Count, Q
+from django.views import View
+from django.http import JsonResponse
 
-from my_settings    import SECRET, ALGORITHM
-from .models        import User, ProductLike
-from product.models import Product
-from core.utils     import (
-                            get_hashed_pw,
-                            is_valid_name,
-                            is_valid_email,
-                            is_valid_password,
-                            checkpw,
-                            issue_token,
-                            )
+from my_settings import SECRET, ALGORITHM
+from .models import User
+from core.utils import (
+    get_hashed_pw,
+    is_valid_name,
+    is_valid_email,
+    is_valid_password,
+    checkpw,
+    issue_token,
+)
 
 class SignUpView(View):
     def post(self, request):
