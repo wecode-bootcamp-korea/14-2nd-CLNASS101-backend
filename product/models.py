@@ -11,7 +11,7 @@ class Product(models.Model):
     sub_category    = models.ForeignKey('product.SubCategory', on_delete=models.SET_NULL, null=True)
     difficulty      = models.ForeignKey('product.Difficulty', on_delete=models.SET_NULL, null=True)
     creator         = models.ForeignKey('user.User', on_delete=models.CASCADE, null=True)
-    signiture       = models.ForeignKey('product.Signiture', on_delete=models.CASCADE, null=True)
+    signature       = models.ForeignKey('product.Signature', on_delete=models.CASCADE, null=True)
     kit             = models.ManyToManyField('kit.Kit', through='ProductKit')
     detail_category = models.ManyToManyField('product.DetailCategory', through='ProductDetailCategory')
     created_at      = models.DateTimeField(auto_now_add=True)
@@ -125,7 +125,8 @@ class Lecture(models.Model):
 
 class LectureComment(models.Model):
     content    = models.CharField(max_length=200)
-    image_url  = models.URLField(max_length=1000)
+    image_url  = models.URLField(max_length=1000, null=True)
+    user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
     parent     = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     lecture    = models.ForeignKey('product.Lecture', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -165,11 +166,11 @@ class LectureProgress(models.Model):
     class Meta:
         db_table = 'lecture_progresses'
 
-class Signiture(models.Model):
+class Signature(models.Model):
     name = models.CharField(max_length=40)
 
     class Meta:
-        db_table = 'signitures'
+        db_table = 'signatures'
 
 class ProductKit(models.Model):
     product = models.ForeignKey('product.Product', on_delete=models.CASCADE)
