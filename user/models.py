@@ -4,7 +4,7 @@ class User(models.Model):
     name                   = models.CharField(max_length=50)
     nick_name              = models.CharField(max_length=50)
     email                  = models.EmailField(max_length=100)
-    password               = models.CharField(max_length=200)
+    password               = models.CharField(max_length=200, null=True)
     phone_number           = models.CharField(max_length=50)
     is_creator             = models.BooleanField(default=False, null=True)
     profile_image          = models.URLField(max_length=1000, null=True)
