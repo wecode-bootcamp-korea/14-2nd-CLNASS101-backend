@@ -25,7 +25,7 @@ class UserLogInTest(TestCase):
             'password' : self.TEST_PASSWORD,
         }
         self.client.post(self.SIGN_UP_URL, request, content_type='application/json')
-        self.user = User.objects.get(name=self.TEST_EMAIL)
+        self.user = User.objects.get(email=self.TEST_EMAIL)
         self.access_token = issue_token(self.user.pk)
 
     def tearsDown(self):
