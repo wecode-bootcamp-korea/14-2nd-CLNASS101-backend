@@ -43,7 +43,7 @@ class UserLogInTest(TestCase):
     
     def test_post_log_in_is_user_exist(self):
         request = {
-            'email'    : self.TEST_EMAIL,
+            'email'    : self.PASS_EMAIL,
             'password' : self.TEST_PASSWORD
         }
         response = self.client.post(self.URL, request, content_type='application/json')
@@ -56,15 +56,15 @@ class UserLogInTest(TestCase):
             'email'    : self.TEST_EMAIL,
             'password' : self.TEST_PASSWORD
         }
-
+        
         response = self.client.post(self.URL, request, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['name'], self.user.name)
         self.assertEqual(response.json()['token'], self.access_token)
-
+        
     def test_post_log_in_check_pw(self):
         request = {
-            'email'    : self.PASS_EMAIL,
+            'email'    : self.TEST_EMAIL,
             'password' : self.PASS_PASSWORD
         }
         response = self.client.post(self.URL, request, content_type='application/json')
@@ -72,4 +72,4 @@ class UserLogInTest(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['MESSAGE'], 'INVALID_PASSWORD')
-        self.assertEqual(checkpw(hashed_pw, self.user), True)
+        self.assertEqual(checkpw(hashed_pw, self.user), False)

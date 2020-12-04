@@ -108,7 +108,7 @@ class ProductDetailCategory(models.Model):
 class Chapter(models.Model):
     name            = models.CharField(max_length=100)
     product         = models.ForeignKey('product.Product', on_delete=models.CASCADE)
-    order           = models.IntegerField(max_length=20)
+    order           = models.IntegerField()
     thumbnail_image = models.URLField(max_length=1000)
 
     class Meta:
