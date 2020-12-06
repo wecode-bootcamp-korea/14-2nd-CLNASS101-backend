@@ -2,10 +2,18 @@ from django.db import models
 
 class User(models.Model):
     name                   = models.CharField(max_length=50)
+<<<<<<< HEAD
     nick_name              = models.CharField(max_length=50)
     email                  = models.EmailField(max_length=100)
     password               = models.CharField(max_length=200, null=True)
     phone_number           = models.CharField(max_length=50)
+=======
+    nick_name              = models.CharField(max_length=50, null=True)
+    kakao_id               = models.CharField(max_length=200, null=True)
+    email                  = models.EmailField(max_length=100)
+    password               = models.CharField(max_length=200, null=True)
+    phone_number           = models.CharField(max_length=50, null=True)
+>>>>>>> 3a472ce... Add: SignUpView
     is_creator             = models.BooleanField(default=False, null=True)
     profile_image          = models.URLField(max_length=1000, null=True)
     is_benefit             = models.BooleanField(default=False)
