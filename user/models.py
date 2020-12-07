@@ -16,7 +16,6 @@ class User(models.Model):
     coupon                 = models.ManyToManyField('user.Coupon', through='user.UserCoupon')
     recently_view          = models.ManyToManyField('product.Product', through='user.RecentlyView', related_name='product_view_user')
     user_product           = models.ManyToManyField('product.Product', through='user.UserProduct', related_name='product_buy_user')
-    community_comment_like = models.ManyToManyField('product.CommunityComment', through='user.CommunityCommentLike', related_name='comment_like_user')
     product_like           = models.ManyToManyField('product.Product', through='user.ProductLike', related_name='product_like_user')
     community_like         = models.ManyToManyField('product.Community', through='product.CommunityLike', related_name='community_like_user')
     kit_like               = models.ManyToManyField('kit.Kit', through='kit.KitLike')
@@ -66,14 +65,6 @@ class UserProduct(models.Model):
 
     class Meta:
         db_table = 'users_products'
-
-class CommunityCommentLike(models.Model):
-    user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
-    comment    = models.ForeignKey('product.CommunityComment', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'community_comment_likes'
 
 class ProductLike(models.Model):
     user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
