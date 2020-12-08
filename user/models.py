@@ -2,7 +2,7 @@ from django.db import models
 
 class User(models.Model):
     name                   = models.CharField(max_length=50)
-    nick_name              = models.CharField(max_length=50)
+    nick_name              = models.CharField(max_length=50, null=True)
     email                  = models.EmailField(max_length=100)
     password               = models.CharField(max_length=200, null=True)
     phone_number           = models.CharField(max_length=50)
@@ -40,7 +40,7 @@ class Coupon(models.Model):
     product       = models.ForeignKey('product.Product', on_delete=models.SET_NULL, null=True)
     created_at    = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True, editable=True)
-
+    
     class Meta:
         db_table = 'coupons'
 
@@ -59,10 +59,10 @@ class RecentlyView(models.Model):
         db_table = 'recently_views'
 
 class UserProduct(models.Model):
-    user        = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
-    product     = models.ForeignKey('product.Product', on_delete=models.CASCADE)
-    created_at  = models.DateTimeField(auto_now_add=True)
-
+    user       = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
+    product    = models.ForeignKey('product.Product', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
     class Meta:
         db_table = 'users_products'
 
