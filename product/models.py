@@ -126,6 +126,7 @@ class Lecture(models.Model):
 class LectureComment(models.Model):
     content    = models.CharField(max_length=200)
     image_url  = models.URLField(max_length=1000, null=True)
+    user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
     parent     = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     lecture    = models.ForeignKey('product.Lecture', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
