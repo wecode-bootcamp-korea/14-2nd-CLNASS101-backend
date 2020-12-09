@@ -25,6 +25,17 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='CommunityCommentLike',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('comment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='product.communitycomment')),
+            ],
+            options={
+                'db_table': 'community_comment_likes',
+            },
+        ),
+        migrations.CreateModel(
             name='Coupon',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

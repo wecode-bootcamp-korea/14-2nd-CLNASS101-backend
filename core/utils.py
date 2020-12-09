@@ -11,7 +11,7 @@ def login_decorator(view_name):
     def real_decorator(func):
         def wrapper(self, request, *args, **kwargs):
             try:
-                token   = request.headers.get('Authorization', None)
+                token = request.headers.get('Authorization', None)
 
                 if not token and view_name == 'ProductDetailView':
                     request.user = User.objects.filter(id=0)
@@ -32,7 +32,9 @@ def login_decorator(view_name):
                 return JsonResponse({"MESSAGE": "INVALID_USER"}, status=401)
 
             return func(self, request, *args, **kwargs)
+
         return wrapper
+
     return real_decorator
 
 def get_hashed_pw(password):
