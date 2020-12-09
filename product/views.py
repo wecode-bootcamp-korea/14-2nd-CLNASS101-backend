@@ -9,7 +9,7 @@ from core.utils     import login_decorator
 
 class ProductDetailView(View):
     
-    @login_decorator(view_name='ProductDetailView')
+    @login_decorator(login_required=False)
     def get(self, request, product_id):
         try:
             if not isinstance(product_id, int):

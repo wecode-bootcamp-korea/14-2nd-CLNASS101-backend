@@ -152,6 +152,17 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name='LectureVideo',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('video_url', models.URLField(max_length=1000)),
+                ('duration', models.DurationField(null=True)),
+            ],
+            options={
+                'db_table': 'lecture_videos',
+            },
+        ),
+        migrations.CreateModel(
             name='MainCategory',
             fields=[
                 ('id', models.AutoField(auto_created=True,

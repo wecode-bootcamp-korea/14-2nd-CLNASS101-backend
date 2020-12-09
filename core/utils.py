@@ -7,14 +7,13 @@ from django.http import JsonResponse
 from my_settings import SECRET, ALGORITHM
 from user.models import User
 
-
-def login_decorator(view_name):
+def login_decorator(login_required):
     def real_decorator(func):
         def wrapper(self, request, *args, **kwargs):
             try:
                 token = request.headers.get('Authorization', None)
 
-                if not token and view_name == 'ProductDetailView':
+                if not token and not login_required:
                     request.user = User.objects.filter(id=0)
                     return func(self, request, *args, **kwargs)
 
