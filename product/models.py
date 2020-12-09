@@ -17,9 +17,7 @@ class Product(models.Model):
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateField(auto_now=True, editable=True)
     is_deleted      = models.BooleanField(default=False)
-
     
-
     class Meta:
         db_table = 'products'
 
@@ -54,22 +52,26 @@ class Community(models.Model):
     description = models.CharField(max_length=1000)
     user        = models.ForeignKey('user.User', on_delete=models.CASCADE)
     product     = models.ForeignKey('product.Product', on_delete=models.CASCADE)
-
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True, editable=True)
+    
     class Meta:
         db_table = 'communities'
 
 class CommunityComment(models.Model):
-    content   = models.CharField(max_length=500)
-    user      = models.ForeignKey('user.User', on_delete=models.CASCADE)
-    community = models.ForeignKey('product.Community', on_delete=models.CASCADE)
-
+    content    = models.CharField(max_length=500)
+    user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    community  = models.ForeignKey('product.Community', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, editable=True)
+    
     class Meta:
         db_table = 'community_comments'
 
 class CommunityLike(models.Model):
     user      = models.ForeignKey('user.User', on_delete=models.CASCADE)
     community = models.ForeignKey('product.Community', on_delete=models.CASCADE)
-
+    
     class Meta:
         db_table = 'community_likes'
 
@@ -119,13 +121,14 @@ class Lecture(models.Model):
     video_url = models.URLField(max_length=1000)
     product   = models.ForeignKey('product.Product', on_delete=models.CASCADE)
     chapter   = models.ForeignKey('product.Chapter', on_delete=models.SET_NULL, null=True)
-
+    
     class Meta:
         db_table = 'lectures'
 
 class LectureComment(models.Model):
     content    = models.CharField(max_length=200)
     image_url  = models.URLField(max_length=1000, null=True)
+    user       = models.ForeignKey('user.User', on_delete=models.CASCADE)
     parent     = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     lecture    = models.ForeignKey('product.Lecture', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
