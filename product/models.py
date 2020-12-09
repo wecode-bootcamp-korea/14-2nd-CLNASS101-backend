@@ -125,6 +125,14 @@ class Lecture(models.Model):
     class Meta:
         db_table = 'lectures'
 
+class LectureVideo(models.Model):
+    video_url = models.URLField(max_length=1000)
+    duration = models.DurationField(null=True)
+    lecture = models.OneToOneField('product.Lecture', on_delete=models.SET_NULL, null=True)
+    
+    class Meta:
+        db_table = 'lecture_videos'
+
 class LectureComment(models.Model):
     content    = models.CharField(max_length=200)
     image_url  = models.URLField(max_length=1000, null=True)
