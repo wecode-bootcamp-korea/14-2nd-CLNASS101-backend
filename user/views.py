@@ -96,9 +96,9 @@ class KakaoLogInView(View):
                 return JsonResponse({'MESSAGE': 'EMAIL_REQUIRED'}, status=405)
 
             kakao_user = User.objects.get_or_create(
-                name=response["properties"]["nickname"],
-                email=response["kakao_account"]["email"],
-                profile_image=response["properties"]["profile_image"],
+                name          = response["properties"]["nickname"],
+                email         = response["kakao_account"]["email"],
+                profile_image = response["properties"]["profile_image"],
             )[0]
 
             token = issue_token(kakao_user.id)
@@ -112,6 +112,8 @@ class KakaoLogInView(View):
             return JsonResponse({"MESSAGE": "TYPE_ERROR"}, status=400)
         except KeyError as e:
             return JsonResponse({"MESSAGE": f"KEY_ERROR:{e}"}, status=400)
+
+
 
 class SearchView(View):
     def get(self, request):
