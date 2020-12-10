@@ -1,5 +1,7 @@
+import json
 from datetime       import date
 
+from django.db.models import Count
 from django.views   import View
 from django.http    import JsonResponse
 
@@ -137,3 +139,60 @@ def get_user_info(community):
     return User.objects.values(
                 'id', 'nick_name', 'profile_image'
            ).get(id=community.user_id)
+
+class MainPageView(View):
+    def get(self, request):
+        try:
+            sorting          = request.GET.get('sorting')
+            main_category_id = request.GET.get('main')
+            sub_category_id  = request.GET.get('sub')
+        
+            products = Product.objects.select_related(
+                'main_category',
+                'sub_category',
+                'creator'
+                ).prefetch_related(
+                    'product_like_user',
+                    'product_view_user'
+                    ).annotate(likecount=Count('product_like_user'))
+
+            filters = {}
+
+            if main_category_id:
+                filters['main_category__id'] = main_category_id
+
+            if sub_category_id:
+                filters['sub_category__id'] = sub_category_id
+
+            sortings   = {
+                'updated' : '-created_at',
+                'popular' : '-likecount'
+            }
+
+            if sorting in sortings:
+                products = products.order_by(sortings[sorting])
+
+            products_list = [{
+                'created_at'  : product.created_at,
+                'id'          : product.id,
+                'title'       : product.name,
+                'thumbnail'   : product.thumbnail_image,
+                'subCategory' : product.sub_category.name,
+                'creator'     : product.creator.name,
+                'isLiked'     : False, #True if product.product_like_user.exists() else False, 
+                #모르겠습니다..새로운 로그인 데코레이터도 적용해야하는데.. 그래야 이게 말이 되는데,, 지금은 로그인 안해서, 좋아요를 못하는 상황...
+                'likeCount'   : product.likecount,
+                'price'       : int(product.price),
+                'sale'        : product.sale,
+                'finalPrice'  : round(int(product.price * (1-product.sale)),2)
+            } for product in products.filter(**filters)]
+
+            if not products_list:
+                return JsonResponse({'MESSAGE': 'NO_RESULT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE': 'TYPE_ERROR'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+        return JsonResponse({'RESULT': products_list}, status=200)
