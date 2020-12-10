@@ -1,9 +1,10 @@
+import json
 from datetime       import date
 
 from django.views   import View
 from django.http    import JsonResponse
 
-from product.models import Product
+from product.models import Product, Community, CommunityComment, CommunityLike, Lecture, LectureComment
 from user.models    import User, ProductLike, RecentlyView
 from core.utils     import login_decorator
 
@@ -134,3 +135,280 @@ def get_user_info(community):
     return User.objects.values(
                 'id', 'nick_name', 'profile_image'
            ).get(id=community.user_id)
+
+class CommunityView(View):
+    @login_decorator(view_name='CommunityView')
+    def post(self, request):
+        data=json.loads(request.body)
+        try:
+            user        = request.user
+            product     = Product.objects.get(pk=data['product_id'])
+            description = data['description']
+
+            Community.objects.create(
+                user        = user,
+                product     = product,
+                description = description,
+            )
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except User.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_USER'}, status=400)
+        except Product.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_PRODUCT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+    
+    @login_decorator(view_name='CommunityView')
+    def patch(self, request, id):
+        try:
+            user_id     = request.user.id
+            data        = json.loads(request.body)
+            description = data['description']
+
+            community_update = Community.objects.get(pk=id)
+
+            if community_update.user.id is not user_id: 
+                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+            community_update.description = description
+            community_update.save()
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except Community.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMUNITY'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+    @login_decorator(view_name='CommunityView')
+    def delete(self, request, id):
+        try:
+            user_id          = request.user.id
+            community_delete = Community.objects.get(pk=id)
+            
+            if community_delete.user.id is not user_id: 
+                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+            community_delete.delete()
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except Community.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMUNITY'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+    @login_decorator(view_name='CommunityView')
+    def get(self, request, id):
+        try:
+            community      = Community.objects.select_related('user','product','product__sub_category','product__creator').prefetch_related('user__community_like','user__community_like').get(pk=id)
+            comments       = CommunityComment.objects.select_related('user').filter(community_id=id)
+            comment_count  = CommunityComment.objects.filter(community_id=id).count()
+            community_like = CommunityLike.objects.filter(community_id=id)
+
+            community_detail = {
+                'id'           : community.id,
+                'name'         : community.user.name,
+                'profileImage' : community.user.profile_image,
+                'createdAt'    : community.created_at,
+                'content'      : community.description,
+                'likeCount'    : community.user.community_like.all().count(),
+                'isLiked'      : get_is_like(request.user.id) if request.user else False,
+                'commentCount' : comment_count,
+                'thumbnail'    : community.product.thumbnail_image,
+                'subCategory'  : community.product.sub_category.name,
+                'creator'      : community.product.creator.name,
+                'productTitle' : community.product.name,
+                }
+
+            comment_list = [{
+                'id'           : comment.id,
+                'name'         : comment.user.name,
+                'profileImage' : comment.user.profile_image,
+                'created_at'   : comment.created_at,
+                'content'      : comment.content 
+                } for comment in comments ]
+
+            return JsonResponse({"community_detail": community_detail, "comment_count": comment_count, "comment_list": comment_list}, status=200)
+        except Community.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMUNITY'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+def get_is_like(user_id):
+    return CommunityLike.objects.filter(community_id=id, user_id =user_id).exists()
+
+
+class CommunityCommentView(View):
+    @login_decorator(view_name='CommunityCommentView')
+    def post(self, request):
+        data=json.loads(request.body)
+        try:
+            user      = request.user
+            community = Community.objects.get(pk=data['community_id'])
+           # comment   = CommunityComment.objects.get(pk=data['community_comment_id'])
+            content   = data['content']
+
+            CommunityComment.objects.create(
+                user      = user,
+                communtiy = community,
+                content   = content,
+            )
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except User.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_USER'}, status=400)
+        except Community.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_COMMUNITY'}, status=400)
+        except CommunityComment.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_COMMENT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+#커뮤니티 댓글 지우기
+    @login_decorator
+    def delete(self, request, id):
+        user_id = request.user.id
+        try:
+            community_comment_delete = CommunityComment.objects.get(pk=id)
+            if community_comment_delete.user.id is not user_id: 
+                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+            community_comment_delete.delete()
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except CommunityComment.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMUNITY'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+class LectureCommentView(View):
+    @login_decorator(view_name='LectureCommentView')
+    def post(self, request):
+        data=json.loads(request.body)
+        try:
+            user        = request.user
+            lecture     = Lecture.objects.get(pk=data['lecture_id'])
+            content     = data['content'] 
+            image_url   = data['image_url']
+
+            LectureComment.objects.create(
+                user      = user,
+                lecture   = lecture,
+                content   = content,
+                image_url = image_url
+            )
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except User.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_USER'}, status=400)
+        except Lecture.DoesNotExist:
+            return JsonResponse({'MESSAGE':'INVALID_LECTURE'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+    
+    @login_decorator(view_name='LectureCommentView')
+    def patch(self, request, id):
+        data = json.loads(request.body)
+        try:
+            user_id                = request.user.id
+            content                = data['content']
+            lecture_comment_update = LectureComment.objects.get(pk=id)
+
+            if lecture_comment_update.user.id != user_id: #수정하기 누르자마자 작성자 아니면 걸러지는
+                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+            lecture_comment_update.content = content
+            lecture_comment_update.save()
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except LectureComment.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMENT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+    @login_decorator(view_name='LectureCommentView')
+    def delete(self, request, id):
+        user_id = request.user.id
+        try:
+            lecture_comment_delete = LectureComment.objects.get(pk=id)
+            if lecture_comment_delete.user.id != user_id: 
+                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+            lecture_comment_delete.delete()
+            return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
+        except LectureComment.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMENT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+    @login_decorator(view_name='LectureCommentView')
+    def get(self, request):
+        try:
+
+            lecture_comments = LectureComment.objects.select_related('user').filter(user_id=user_id)
+            comment_count    = LectureComment.objects.filter(lecture_id=lecture_id).count()
+            comments = [{
+            'id'           : lecture_comment.id,
+            'name'         : lecture_comment.user.name,
+            'profileImage' : lecture_comment.user.profile_image,
+            'createdAt'    : lecture_comment.created_at,
+            'content'      : lecture_comment.content,
+            } for lecture_comment in lecture_comments]
+
+            return JsonResponse({"comment_count": comment_count, "comment_list": comments}, status=200)
+        except LectureComment.DoesNotExist:
+            return JsonResponse({'MESSAGE':'NO_EXIST_COMMENT'}, status=400)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+class CommunityLikeView(View):
+    @login_decorator(view_name='CommunityLikeView')
+    def post(self, request):
+        try:
+            data         = json.loads(request.body)
+            user_id      = request.user.id
+            community_id = data['community_id']
+
+            if CommunityLike.objects.prefetch_related('community_like_user').filter(user=user_id, community=community_id).exists():
+                CommunityLike.objects.get(user=user_id, community=community_id).delete()
+                return JsonResponse({'MESSAGE':'REMOVED'}, status = 200)
+            
+            CommunityLike(
+                user_id    = user_id,
+                community_id = community_id
+            ).save()
+            return JsonResponse({'MESSAGE':'LIKED_COMMUNITY'}, status=201)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
+
+class ProductLikeView(View):
+    @login_decorator(view_name='ProductLikeView')
+    def post(self, request):
+        try:
+            data       = json.loads(request.body)
+            user_id    = request.user.id
+            product_id = data['product_id']
+
+            if ProductLike.objects.prefetch_related('product_like_user').filter(user=user_id, product=product_id).exists():
+                ProductLike.objects.get(user=user_id, product=product_id).delete()
+                return JsonResponse({'MESSAGE':'REMOVED'}, status = 200)
+            
+            ProductLike(
+                user_id    = user_id,
+                product_id = data['product_id']
+            ).save()
+            return JsonResponse({'MESSAGE':'LIKED_PRODUCT'}, status=201)
+        except KeyError as e :
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e :
+            return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+    

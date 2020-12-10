@@ -18,6 +18,22 @@ def login_decorator(view_name):
                     request.user = User.objects.filter(id=0)
                     return func(self, request, *args, **kwargs)
 
+                if not token and view_name == 'CommunityView':
+                    request.user = User.objects.filter(id=0)
+                    return func(self, request, *args, **kwargs)
+                    
+                if not token and view_name == 'CommunityCommentView':
+                    request.user = User.objects.filter(id=0)
+                    return func(self, request, *args, **kwargs)
+                if not token and view_name == 'LectureCommentView':
+                    request.user = User.objects.filter(id=0)
+                    return func(self, request, *args, **kwargs)
+                if not token and view_name == 'CommunityLikeView':
+                    request.user = User.objects.filter(id=0)
+                    return func(self, request, *args, **kwargs)
+                if not token and view_name == 'ProductLikeView':
+                    request.user = User.objects.filter(id=0)
+                    return func(self, request, *args, **kwargs)
                 payload = jwt.decode(
                     token,
                     SECRET['secret'],

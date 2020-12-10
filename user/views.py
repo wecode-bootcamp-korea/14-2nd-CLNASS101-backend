@@ -80,32 +80,30 @@ class LogInView(View):
 class KakaoLogInView(View):
     def post(self, request):
         try:
-            access_token = request.headers["Authorization"]
-
+            access_token = request.headers.get("Authorization", None)
+            
             if not access_token:
                 return JsonResponse({'MESSAGE': 'TOKEN_REQUIRED'}, status=400)
 
             url     = "https://kapi.kakao.com/v2/user/me"
             headers = {
-                "Authorization": f"Bearer {access_token}",
-                "Content-type" : "application/x-www-form-urlencoded; charset=utf-8",
+                "Authorization": f"Bearer {access_token}"
             }
-            response   = requests.get(url, headers=headers)
-            kakao_user = json.loads(response)
-
-            if not 'email' in kakao_user['kakao_account']:
+            
+            response   = requests.get(url, headers=headers).json()
+            
+            if not 'email' in response['kakao_account']:
                 return JsonResponse({'MESSAGE': 'EMAIL_REQUIRED'}, status=405)
 
             kakao_user = User.objects.get_or_create(
-                kakao_id      = kakao_user["id"],
-                name          = kakao_user["properties"]["nickname"],
-                email         = kakao_user["kakao_account"]["email"],
-                profile_image = kakao_user["properties"]["profile_image"],
+                name=response["properties"]["nickname"],
+                email=response["kakao_account"]["email"],
+                profile_image=response["properties"]["profile_image"],
             )[0]
 
             token = issue_token(kakao_user.id)
 
-            return JsonResponse({"token": token, "name": kakao_user.name, "id": kakao_user.id}, status=200)
+            return JsonResponse({"token": token, "name": kakao_user.name, 'profileImage':kakao_user.profile_image}, status=200)
         except json.JSONDecodeError as e:
             return JsonResponse({"MESSAGE": f"JSON_ERROR:{e}"}, status=400)
         except User.DoesNotExist:
