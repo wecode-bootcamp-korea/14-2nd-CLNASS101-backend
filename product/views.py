@@ -84,19 +84,22 @@ class ProductDetailView(View):
                 'likeCount'       : product.productlike_set.count(),
                 'isLike'          : is_like,
                 'curriculum'      : [{
-                                        'thumbnail-image' : chapter.thumbnail_image,
-                                        'chapter-name'    : chapter.name,
+                                        'thumbnailImage' : chapter.thumbnail_image,
+                                        'chapterName'    : chapter.name,
                                         'order'           : chapter.order,
-                                        'chapter-detail'  : [{
-                                                                'lecture-title'     : lecture.name,
-                                                                'lecture-video-url' : lecture.video_url,
-                                                            } for lecture in chapter.lecture_set.all()]
+                                        'chapterDetail'  : [{
+                                                                'lectureNum'      : index+1,
+                                                                'lectureTitle'    : lecture.name,
+                                                                'lectureVideoUrl' : lecture.video_url,
+                                                            } for index, lecture in
+                                                              enumerate(chapter.lecture_set.all())]
                                     } for chapter in chapters],
                 'kitInfo'         : [{
-                                        'mainImageUrl'    : kit.main_image_url,
-                                        'description'     : kit.description,
-                                        'subImageUrls'    : [{
-                                                                'subImageUrl' : sub_image.image_url
+                                        'mainImageUrl' : kit.main_image_url,
+                                        'kitName'      : kit.name,
+                                        'description'  : kit.description,
+                                        'subImageUrls' : [{
+                                                            'subImageUrl' : sub_image.image_url
                                                             } for sub_image in kit.kitsubimageurl_set.all()]
                                     } for kit in kits],
                 'creatorInfo'     : get_user_info(creator_communities[0])
