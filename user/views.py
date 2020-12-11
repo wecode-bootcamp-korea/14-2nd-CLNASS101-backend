@@ -182,4 +182,86 @@ class SearchView(View):
         except TypeError:
             return JsonResponse({'MESSAGE': 'TYPE_ERROR'}, status=400)
         except json.JSONDecodeError as e :
+            return JsonResponse({"MESSAGE": f"JSON_ERROR:{e}"}, status=400)
+
+class MyPageView(View):
+    @login_decorator(view_name='MyPageView')
+    def get(self, request):
+        try:
+            user = request.user
+
+            user_object = User.objects.prefetch_related('coupon','recently_view__product_like_user','product_like__product_like_user','user_product','recently_view__sub_category','recently_view__creator','product_like__sub_category','product_like__creator').get(id=user.id)
+        
+            user_profile = {
+                'id'          : user_object.id,
+                'name'        : user_object.name,
+                'profileImage': user_object.profile_image,
+                'email'       : user_object.email,
+                'point'       : user_object.point,
+                'couponNum'   : user_object.coupon.count(),
+                'likeNum'     : user_object.product_like.count(),
+                'orderNum'    : user_object.user_product.count()
+            }
+
+            created_product_list = Product.objects.select_related(
+                'creator').filter(creator=user.id)
+                
+            own_product_list     = user_object.user_product.all()
+            recently_viewed_list = user_object.recently_view.all()
+            like_product_list    = user_object.product_like.all()
+
+            created_list = [{
+                'classId'    : created.id,
+                'title'      : created.name,
+                'thumbnail'  : created.thumbnail_image,
+                'price'      : created.price,
+                'sale'       : int(created.sale*100),
+                'finalPrice' : round(int(created.price * (1-created.sale)), 2),
+            } for created in created_product_list]
+
+            own_list = [{
+                'classId'       : own_product.id,
+                'title'         : own_product.name,
+                'thumbnail'     : own_product.thumbnail_image,
+                'effectiveDate' : '평생 수강 쌉가능' if not own_product.effective_time else
+                str(((own_product.created_at + own_product.effective_time) -
+                     datetime.today() + timedelta(days=1)).days) + '일 남음',
+            } for own_product in own_product_list]
+
+            viewed_list = [{
+                'classId'     : recent.id,
+                'title'       : recent.name,
+                'thumbnail'   : recent.thumbnail_image,
+                'subCategory' : recent.sub_category.name,
+                'creator'     : recent.creator.name,
+                'isLiked'     : True if recent.product_like_user.exists() else False,
+                'likeCount'   : recent.product_like_user.all().count(),
+                'price'       : recent.price,
+                'sale'        : int((recent.sale)*100),
+                'finalPrice'  : round(int(recent.price * (1-recent.sale)), 2),
+            } for recent in recently_viewed_list]
+
+            liked_list = [{
+                'classId'     : like_product.id,
+                'title'       : like_product.name,
+                'thumbnail'   : like_product.thumbnail_image,
+                'subCategory' : like_product.sub_category.name,
+                'creator'     : like_product.creator.name,
+                'isLiked'     : True if like_product else False,
+                'likeCount'   : like_product.product_like_user.all().count(),
+                'price'       : like_product.price,
+                'sale'        : int((like_product.sale)*100),
+                'finalPrice'  : round(int(like_product.price * (1-like_product.sale)), 2),
+            } for like_product in like_product_list]
+
+            return JsonResponse({'PROFILE': user_profile, 'OWN_PRODUCT': own_list, 'RECENT_VIEW': viewed_list, 'CREATED': created_list, 'LIKED': liked_list}, status=200)
+        except User.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_USER'}, status=400)
+        except Product.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+        except RecentlyView.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_OBJECT'}, status=400)
+        except KeyError as e:
+            return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
+        except json.JSONDecodeError as e:
             return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
