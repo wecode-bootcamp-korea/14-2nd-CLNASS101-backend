@@ -202,9 +202,9 @@ class CommunityView(View):
     def get(self, request, id):
         try:
             community      = Community.objects.select_related('user','product','product__sub_category','product__creator').prefetch_related('user__community_like','user__community_like').get(pk=id)
-            comments       = CommunityComment.objects.select_related('user').filter(community_id=id)
-            comment_count  = CommunityComment.objects.filter(community_id=id).count()
-            community_like = CommunityLike.objects.filter(community_id=id)
+            comments       = community.communitycomment_set.select_related('user').all()
+            comment_count  = comments.count()
+            community_like = community.communitylike_set.all()
 
             community_detail = {
                 'id'           : community.id,
@@ -247,14 +247,12 @@ class CommunityCommentView(View):
         data=json.loads(request.body)
         try:
             user      = request.user
-            community = Community.objects.get(pk=data['community_id'])
-           # comment   = CommunityComment.objects.get(pk=data['community_comment_id'])
             content   = data['content']
 
             CommunityComment.objects.create(
-                user      = user,
-                communtiy = community,
-                content   = content,
+                user         = user,
+                communtiy_id = data['community_id'],
+                content      = content,
             )
             return JsonResponse({'MESSAGE':'SUCCESS'}, status=200)
         except User.DoesNotExist:
@@ -345,12 +343,13 @@ class LectureCommentView(View):
             return JsonResponse({'MESSAGE': f'KEY_ERROR:{e}'}, status=400)
         except json.JSONDecodeError as e :
             return JsonResponse({'MESSAGE': f'JSON_DECODE_ERROR:{e}'}, status=400)
+
     @login_decorator(view_name='LectureCommentView')
     def get(self, request):
         try:
 
             lecture_comments = LectureComment.objects.select_related('user').filter(user_id=user_id)
-            comment_count    = LectureComment.objects.filter(lecture_id=lecture_id).count()
+            comment_count    = LectureComment.objects.all().count()
             comments = [{
             'id'           : lecture_comment.id,
             'name'         : lecture_comment.user.name,
