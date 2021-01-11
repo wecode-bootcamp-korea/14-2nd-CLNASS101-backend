@@ -15,7 +15,7 @@ my_settings.py
 *.csv
 db_uploader.py
 db_truncate.py
-*/migrations/
+*.swp
 
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
@@ -190,6 +190,7 @@ Temporary Items
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
+.idea
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
@@ -711,3 +712,4 @@ fabric.properties
 *.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,python,django,pycharm,vscode
+.idea
