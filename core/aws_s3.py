@@ -1,8 +1,7 @@
-import uuid 
-
 import boto3
 
 from clnass_101     import settings
+
 
 class S3FileManager:
     def __init__(self):
@@ -25,4 +24,3 @@ class S3FileManager:
             Bucket=settings.AWS_STORAGE_BUCKET_NAME,
             Key=file_name
         )
-

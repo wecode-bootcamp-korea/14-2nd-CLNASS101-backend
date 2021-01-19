@@ -713,3 +713,4 @@ fabric.properties
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,python,django,pycharm,vscode
 .idea
+.vscode/
